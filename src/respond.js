@@ -298,34 +298,38 @@
 			}
 		},
 
-		//loop stylesheets, send text content to translate
-		ripCSS = function(){
+		ripOneCSS = function (sheet, isQueued) {
+			var href = sheet.href,
+					media = sheet.media,
+					isCSS = sheet.rel && sheet.rel.toLowerCase() === "stylesheet";
 
-			for( var i = 0; i < links.length; i++ ){
-				var sheet = links[ i ],
-				href = sheet.href,
-				media = sheet.media,
-				isCSS = sheet.rel && sheet.rel.toLowerCase() === "stylesheet";
-
-				//only links plz and prevent re-parsing
-				if( !!href && isCSS && !parsedSheets[ href ] ){
-					// selectivizr exposes css through the rawCssText expando
-					if (sheet.styleSheet && sheet.styleSheet.rawCssText) {
-						translate( sheet.styleSheet.rawCssText, href, media );
-						parsedSheets[ href ] = true;
-					} else {
-						if( (!/^([a-zA-Z:]*\/\/)/.test( href ) && !base) ||
-							href.replace( RegExp.$1, "" ).split( "/" )[0] === w.location.host ){
-							// IE7 doesn't handle urls that start with '//' for ajax request
-							// manually add in the protocol
-							if ( href.substring(0,2) === "//" ) { href = w.location.protocol + href; }
-							requestQueue.push( {
-								href: href,
-								media: media
-							} );
+			//only links plz and prevent re-parsing
+			if (!!href && isCSS && !parsedSheets[href]) {
+				// selectivizr exposes css through the rawCssText expando
+				if (sheet.styleSheet && sheet.styleSheet.rawCssText) {
+					translate(sheet.styleSheet.rawCssText, href, media);
+					parsedSheets[href] = true;
+				} else {
+					if ((!/^([a-zA-Z:]*\/\/)/.test(href) && !base) ||
+							href.replace(RegExp.$1, "").split("/")[0] === w.location.host) {
+						// IE7 doesn't handle urls that start with '//' for ajax request
+						// manually add in the protocol
+						if (href.substring(0, 2) === "//") { href = w.location.protocol + href; }
+						requestQueue.push({
+							href: href,
+							media: media
+						});
+						if (!isQueued) {
+							makeRequests();
 						}
 					}
 				}
+			}
+		},
+		//loop stylesheets, send text content to translate
+		ripCSS = function(){
+			for( var i = 0; i < links.length; i++ ){
+				ripOneCSS(links[i], true);
 			}
 			makeRequests();
 		};
@@ -338,6 +342,9 @@
 
 	//expose getEmValue
 	respond.getEmValue = getEmValue;
+
+	//expose getEmValue
+	respond.process = ripOneCSS;
 
 	//adjust on resize
 	function callMedia(){
