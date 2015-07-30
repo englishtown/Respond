@@ -31,7 +31,7 @@
 			if (!req){
 				return;
 			}
-			req.open( "GET", url, true );
+			req.open( "GET", url, false);
 			req.onreadystatechange = function () {
 				if ( req.readyState !== 4 || req.status !== 200 && req.status !== 304 ){
 					return;
